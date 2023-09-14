@@ -1,0 +1,82 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+
+using namespace std;
+
+// Defining a structure to represent a state on the chessboard
+struct State {
+    vector<int> queens; // queens[i] represents the row of the queen in column i
+    int heuristic;      // heuristic value for A* (number of conflicts)
+
+    State(const vector<int>& queens, int heuristic) : queens(queens), heuristic(heuristic) {}
+};
+
+// Defining a custom comparison function for the priority queue
+struct CompareStates {
+    bool operator()(const State& a, const State& b) {
+        // Higher priority states have lower heuristic values
+        return a.heuristic > b.heuristic;
+    }
+};
+
+// Function to calculate the heuristic (number of conflicts) for a state
+int calculateHeuristic(const vector<int>& queens) {
+    int n = queens.size();
+    int conflicts = 0;
+
+    for (int i = 0; i < n; i++) {
+        for (int j = i + 1; j < n; j++) {
+            if (queens[i] == queens[j] || abs(queens[i] - queens[j]) == j - i) {
+                conflicts++;
+            }
+        }
+    }
+
+    return conflicts;
+}
+
+// A* search algorithm
+void solveNQueensAStar(int n) {
+    vector<int> initialQueens(n, -1); // Initialize queens in each column
+    priority_queue<State, vector<State>, CompareStates> pq;
+
+    // Pushing the initial state onto the priority queue with heuristic
+    pq.push(State(initialQueens, calculateHeuristic(initialQueens)));
+
+    while (!pq.empty()) {
+        State current = pq.top();
+        pq.pop();
+
+        if (current.heuristic == 0) {
+            // Found a solution
+            for (int queen : current.queens) {
+                for (int i = 0; i < n; i++) {
+                    if (i == queen) cout << "Q ";
+                    else cout << ". ";
+                }
+                cout << endl;
+            }
+            return;
+        }
+
+        // Generating successor states
+        for (int row = 0; row < n; row++) {
+            vector<int> successorQueens = current.queens;
+            successorQueens.push_back(row);
+
+            int h = calculateHeuristic(successorQueens);
+            pq.push(State(successorQueens, h));
+        }
+    }
+    cout << "No solution found!" << endl;
+}
+
+int main() {
+    int n;
+    cout << "Enter the number of queens (N): ";
+    cin >> n;
+    solveNQueensAStar(n);
+    return 0;
+}
+  
