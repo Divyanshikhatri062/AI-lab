@@ -1,0 +1,114 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <cmath>
+
+using namespace std;
+
+// Define a structure to represent a cell in the grid
+struct Cell {
+    int x, y; // Coordinates
+    int cost; // Cost to reach this cell
+};
+
+// Define a custom comparison function for the priority queue
+struct CompareCells {
+    bool operator()(const Cell& a, const Cell& b) {
+        // Lower priority cells have lower total cost
+        return a.cost > b.cost;
+    }
+};
+
+// Function to calculate the heuristic (e.g., Euclidean distance) from a cell to the goal
+double calculateHeuristic(const Cell& cell, const Cell& goal) {
+    return sqrt(pow(cell.x - goal.x, 2) + pow(cell.y - goal.y, 2));
+}
+
+// Function to check if a cell is within the grid boundaries
+bool isValidCell(const vector<vector<int>>& grid, int x, int y) {
+    int numRows = grid.size();
+    int numCols = grid[0].size();
+    return (x >= 0 && x < numRows && y >= 0 && y < numCols && grid[x][y] != 1);
+}
+
+// AO* search algorithm
+void solveMonkeyBananaAOStar(vector<vector<int>>& grid, Cell start, Cell goal) {
+    // Create a priority queue for the open set
+    priority_queue<Cell, vector<Cell>, CompareCells> openSet;
+    openSet.push(start);
+
+    // Create a 2D array to track the cost to reach each cell
+    vector<vector<int>> costToReach(grid.size(), vector<int>(grid[0].size(), INT_MAX));
+    costToReach[start.x][start.y] = 0;
+
+    // Create a 2D array to store the parent of each cell
+    vector<vector<Cell>> parent(grid.size(), vector<Cell>(grid[0].size(), {-1, -1, 0}));
+
+    while (!openSet.empty()) {
+        // Get the cell with the lowest cost from the open set
+        Cell current = openSet.top();
+        openSet.pop();
+
+        // Check if we have reached the goal
+        if (current.x == goal.x && current.y == goal.y) {
+            cout << "Monkey found the banana!" << endl;
+
+            // Backtrack to find the path
+            vector<pair<int, int>> path;
+            while (current.x != -1 && current.y != -1) {
+                path.push_back({current.x, current.y});
+                current = parent[current.x][current.y];
+            }
+
+            // Print the path
+            cout << "Path from start to goal:" << endl;
+            for (int i = path.size() - 1; i >= 0; i--) {
+                cout << "(" << path[i].first << ", " << path[i].second << ")";
+                if (i != 0) cout << " -> ";
+            }
+            cout << endl;
+            return;
+        }
+
+        // Generate successor cells
+        int dx[] = {-1, 1, 0, 0};
+        int dy[] = {0, 0, -1, 1};
+
+        for (int i = 0; i < 4; i++) {
+            int newX = current.x + dx[i];
+            int newY = current.y + dy[i];
+
+            if (isValidCell(grid, newX, newY)) {
+                int newCost = current.cost + 1; // Assuming a uniform cost of movement
+
+                if (newCost < costToReach[newX][newY]) {
+                    // Update cost and add to open set
+                    costToReach[newX][newY] = newCost;
+                    openSet.push({newX, newY, newCost});
+                    parent[newX][newY] = {current.x, current.y, newCost};
+                }
+            }
+        }
+    }
+
+    cout << "Monkey couldn't find the banana!" << endl;
+}
+
+int main() {
+    // Define the grid and problem parameters
+    // 0 represents an empty cell, 1 represents an obstacle
+    vector<vector<int>> grid = {
+        {0, 0, 0, 0, 0},
+        {0, 1, 1, 0, 0},
+        {0, 0, 0, 0, 1},
+        {0, 1, 1, 0, 0},
+        {0, 0, 0, 0, 0}
+    };
+
+    Cell start = {0, 0, 0}; // Start cell
+    Cell goal = {4, 4, 0};  // Goal cell
+
+    solveMonkeyBananaAOStar(grid, start, goal);
+    return 0;
+}
+      
